@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      SA_PASSWORD: "OmegaSoft20245$"   # obavezno jak password
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserverdata:/var/opt/mssql
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend/StorageApi
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "5000:5000"
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=EcommerceDb;User Id=sa;Password=OmegaSoft20245$;"
+    depends_on:
+      - sqlserver
+    networks:
+      - app-network
+
+volumes:
+  sqlserverdata:
+
+networks:
+  app-network:

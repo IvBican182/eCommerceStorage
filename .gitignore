@@ -1,0 +1,27 @@
+# -----------------
+# Backend / .NET
+# -----------------
+Backend/StorageApi/bin/
+Backend/StorageApi/obj/
+Backend/StorageApi/.vs/
+Backend/StorageApi/*.user
+Backend/StorageApi/*.suo
+Backend/StorageApi/*.pdb
+Backend/StorageApi/*.log
+Backend/StorageApi/*.env
+Backend/StorageApi/appsettings.json
+
+# Migrations - verzioniramo
+# backend/StorageApi/Migrations/ --> ostaje u repo
+
+# -----------------
+# Frontend / Node / Angular
+# -----------------
+Frontend/node_modules/
+Frontend/dist/
+Frontend/*.env
+
+# -----------------
+# Docker
+# -----------------
+docker-compose.override.yml
