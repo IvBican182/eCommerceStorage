@@ -8,7 +8,7 @@ namespace StorageApi.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        
+
         public DbSet<Product> Products { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
@@ -36,14 +36,20 @@ namespace StorageApi.Data
                 .HasForeignKey(oi => oi.ProductId);
 
             builder.Entity<OrderItem>()
-                .HasOne<Order>()
+                .HasOne(o => o.Order)
                 .WithMany(o => o.OrderItems)
                 .HasForeignKey(oi => oi.OrderId);
-                
+
             builder.Entity<Order>()
                 .HasOne(o => o.User)
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId);
+        }
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            configurationBuilder.Properties<decimal>()
+                .HavePrecision(18, 2);
         }
     }
 }
