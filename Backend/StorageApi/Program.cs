@@ -20,10 +20,10 @@ builder.Services.AddIdentity<User, Role>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-
+// Add services
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();      // Needed for Swagger
+builder.Services.AddSwaggerGen(); 
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddCors(options =>
@@ -43,7 +43,8 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
