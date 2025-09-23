@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using StorageApi.Interfaces;
 using StorageApi.Models;
+using StorageApi.ModelsDTO;
 
 namespace StorageApi.Controllers
 {
@@ -31,7 +32,7 @@ namespace StorageApi.Controllers
         }
 
         [HttpPost("{userId}")]
-        public async Task<ActionResult<Cart>> CreateCart(Guid userId, List<(Guid productId, int quantity)> products)
+        public async Task<ActionResult<Cart>> CreateCart(Guid userId, List<AddRemoveCartItemDto> products)
         {
             try
             {
@@ -45,7 +46,7 @@ namespace StorageApi.Controllers
         }
 
         [HttpPut("{cartId}/add-items")]
-        public async Task<ActionResult<Cart>> AddItemToCart(Guid cartId, List<(Guid productId, int quantity)> products)
+        public async Task<ActionResult<Cart>> AddItemToCart(Guid cartId, List<AddRemoveCartItemDto> products)
         {
             try
             {
@@ -59,7 +60,7 @@ namespace StorageApi.Controllers
         }
 
         [HttpPut("{cartId}/remove-items")]
-        public async Task<ActionResult<Cart>> RemoveItemFromCart(Guid cartId, List<(Guid productId, int quantity)> products)
+        public async Task<ActionResult<Cart>> RemoveItemFromCart(Guid cartId, List<AddRemoveCartItemDto> products)
         {
             try
             {

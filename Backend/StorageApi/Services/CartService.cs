@@ -4,6 +4,7 @@ using Microsoft.VisualBasic;
 using StorageApi.Data;
 using StorageApi.Interfaces;
 using StorageApi.Models;
+using StorageApi.ModelsDTO;
 
 namespace StorageApi.Services
 {
@@ -15,7 +16,7 @@ namespace StorageApi.Services
             _context = context;
         }
 
-        public async Task<Cart> CreateCart(Guid userId, List<(Guid productId, int quantity)> products)
+        public async Task<Cart> CreateCart(Guid userId, List<AddRemoveCartItemDto> products)
         {
             var user = await _context.Users.FindAsync(userId);
 
@@ -32,7 +33,7 @@ namespace StorageApi.Services
             {
                 var cartItem = new CartItem
                 {
-                    ProductId = item.productId,
+                    ProductId = item.ProductId,
                     CartId = cart.Id,
                     Quantity = item.quantity
 
@@ -60,7 +61,7 @@ namespace StorageApi.Services
             return userCart;
         }
 
-        public async Task<Cart> AddItemToCart(Guid id, List<(Guid productId, int quantity)> products)
+        public async Task<Cart> AddItemToCart(Guid id, List<AddRemoveCartItemDto> products)
         {
             var cart = await _context.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == id);
 
@@ -72,7 +73,7 @@ namespace StorageApi.Services
             foreach (var item in products)
             {
                 var existingCartItem = cart.CartItems.FirstOrDefault(
-                    ci => ci.ProductId == item.productId && ci.CartId == cart.Id);
+                    ci => ci.ProductId == item.ProductId && ci.CartId == cart.Id);
 
                 if (existingCartItem != null)
                 {
@@ -81,7 +82,7 @@ namespace StorageApi.Services
 
                 var cartItem = new CartItem
                 {
-                    ProductId = item.productId,
+                    ProductId = item.ProductId,
                     CartId = cart.Id,
                     Quantity = item.quantity
 
@@ -98,7 +99,7 @@ namespace StorageApi.Services
 
         }
 
-        public async Task<Cart> RemoveItemFromCart(Guid id, List<(Guid productId, int quantity)> products)
+        public async Task<Cart> RemoveItemFromCart(Guid id, List<AddRemoveCartItemDto> products)
         {
             var cart = await _context.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == id);
 
@@ -110,7 +111,7 @@ namespace StorageApi.Services
             foreach (var product in products)
             {
                 var existingCartItem = cart.CartItems.FirstOrDefault(
-                    ci => ci.ProductId == product.productId && ci.CartId == cart.Id);
+                    ci => ci.ProductId == product.ProductId && ci.CartId == cart.Id);
 
                 if (existingCartItem == null)
                 {
