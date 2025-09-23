@@ -1,4 +1,5 @@
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using StorageApi.Interfaces;
@@ -7,7 +8,7 @@ using StorageApi.Models;
 namespace StorageApi.Controllers
 {
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("api/[controller]")]
 
     public class ProductController : ControllerBase
     {
@@ -41,6 +42,7 @@ namespace StorageApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<Product>> CreateProduct(Product product)
         {
             await _productService.CreateProduct(product);
@@ -49,6 +51,7 @@ namespace StorageApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<Product>> UpdateProduct(Guid id, Product product)
         {
             try
@@ -63,6 +66,7 @@ namespace StorageApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(Guid id)
         {
             try
