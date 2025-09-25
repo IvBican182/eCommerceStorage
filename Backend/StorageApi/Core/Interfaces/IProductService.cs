@@ -1,8 +1,8 @@
 
-using System.Diagnostics.Eventing.Reader;
-using StorageApi.Models;
 
-namespace StorageApi.Interfaces
+using StorageApi.Core.Models;
+
+namespace StorageApi.Core.Interfaces
 {
     public interface IProductService
     {

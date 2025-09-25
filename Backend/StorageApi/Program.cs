@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StorageApi.Data;
-using StorageApi.Interfaces;
-using StorageApi.Models;
+using StorageApi.Core.Interfaces;
+using StorageApi.Core.Models;
 using StorageApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +24,8 @@ builder.Services.AddIdentity<User, Role>(options =>
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 // Add services
 builder.Services.AddControllers();
@@ -45,6 +47,10 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 builder.Services.AddAuthentication(options =>
 {

@@ -2,7 +2,8 @@
 
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace StorageApi.Models
+
+namespace StorageApi.Core.Models
 {
     public class Cart
     {

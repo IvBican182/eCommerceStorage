@@ -5,7 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using StorageApi.Models;
+using StorageApi.Core.Models;
 
 namespace StorageApi.Services
 {

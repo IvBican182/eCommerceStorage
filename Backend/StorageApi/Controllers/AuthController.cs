@@ -1,6 +1,6 @@
 
 using Microsoft.AspNetCore.Mvc;
-using StorageApi.ModelsDTO;
+using StorageApi.Core.ModelsDTO;
 using StorageApi.Services;
 
 namespace StorageApi.Controllers

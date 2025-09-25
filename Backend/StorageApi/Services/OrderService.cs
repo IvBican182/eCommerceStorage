@@ -2,23 +2,25 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using StorageApi.Data;
-using StorageApi.Interfaces;
-using StorageApi.Models;
-using StorageApi.ModelsDTO;
+using StorageApi.Core.Interfaces;
+using StorageApi.Core.Models;
+using StorageApi.Core.ModelsDTO;
 
 namespace StorageApi.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly AppDbContext _context;
-        public OrderService(AppDbContext context)
+        private readonly IRepository<Order> _orderRepository;
+        private readonly IUnitOfWork _unitOfWork;
+        public OrderService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
+            _orderRepository = _unitOfWork.GetRepository<Order>();
         }
 
         public async Task<Order> CreateOrder(Cart cart, Guid userId)
         {
-            var userCart = await _context.Carts.FindAsync(cart.Id);
+            var userCart = await _orderRepository.GetByIdAsync(cart.Id);
 
             if (userCart == null)
             {
@@ -44,16 +46,16 @@ namespace StorageApi.Services
                 order.OrderItems.Add(orderItem);
             }
 
-            _context.Orders.Add(order);
+            _orderRepository.Add(order);
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return order;
 
         }
         public async Task<Order> AddOrderItem(Guid orderId, Guid userId, List<OrderItemDto> products)
         {
-            var userOrder = await _context.Orders.Include(oi => oi.OrderItems).FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+            var userOrder = await _orderRepository.GetAll().Where(o => o.Id == orderId && o.UserId == userId).FirstOrDefaultAsync();
 
             if (userOrder == null)
             {
@@ -68,7 +70,7 @@ namespace StorageApi.Services
 
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return userOrder;
             
@@ -77,11 +79,11 @@ namespace StorageApi.Services
 
         public async Task<Order> RemoveOrderItem(Guid orderId, Guid userId, List<OrderItemDto> products)
         {
-            var userOrder = await _context.Orders.Include(oi => oi.OrderItems).FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+            var userOrder = await _orderRepository.GetAll().Where(o => o.Id == orderId && o.UserId == userId).FirstOrDefaultAsync();
 
             if (userOrder == null)
             {
-                throw new KeyNotFoundException("cart not found");
+                throw new KeyNotFoundException("order not found");
             }
 
             foreach (var product in products)
@@ -96,7 +98,7 @@ namespace StorageApi.Services
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return userOrder;
 
@@ -105,16 +107,16 @@ namespace StorageApi.Services
 
         public async Task<bool> DeleteOrder(Guid orderId, Guid userId)
         {
-            var userOrder = await _context.Orders.Include(oi => oi.OrderItems).FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+            var userOrder = await _orderRepository.GetAll().Where(o => o.Id == orderId && o.UserId == userId).Include(oi => oi.OrderItems).FirstOrDefaultAsync();
 
             if (userOrder == null)
             {
                 throw new KeyNotFoundException("cart not found");
             }
 
-            _context.Orders.Remove(userOrder);
+            _orderRepository.Remove(userOrder);
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             return true;
         }
     }

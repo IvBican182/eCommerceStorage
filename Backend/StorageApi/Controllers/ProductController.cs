@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
-using StorageApi.Interfaces;
-using StorageApi.Models;
+using StorageApi.Core.Interfaces;
+using StorageApi.Core.Models;
 
 namespace StorageApi.Controllers
 {

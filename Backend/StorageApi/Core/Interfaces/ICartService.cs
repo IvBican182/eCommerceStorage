@@ -1,10 +1,11 @@
 
 
 
-using StorageApi.Models;
-using StorageApi.ModelsDTO;
+using StorageApi.Core.Models;
+using StorageApi.Core.ModelsDTO;
 
-namespace StorageApi.Interfaces
+
+namespace StorageApi.Core.Interfaces
 {
     public interface ICartService
     {

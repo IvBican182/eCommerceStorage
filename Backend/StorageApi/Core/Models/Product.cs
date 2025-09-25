@@ -2,7 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace StorageApi.Models
+namespace StorageApi.Core.Models
 {
     public class Product
     {

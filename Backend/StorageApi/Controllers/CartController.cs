@@ -1,8 +1,9 @@
 
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using StorageApi.Interfaces;
-using StorageApi.Models;
-using StorageApi.ModelsDTO;
+using StorageApi.Core.Interfaces;
+using StorageApi.Core.Models;
+using StorageApi.Core.ModelsDTO;
 
 namespace StorageApi.Controllers
 {
@@ -11,9 +12,11 @@ namespace StorageApi.Controllers
     public class CartController : ControllerBase
     {
         private readonly ICartService _cartService;
-        public CartController(ICartService cartService)
+        private readonly IMapper _mapper;
+        public CartController(ICartService cartService, IMapper mapper)
         {
             _cartService = cartService;
+            _mapper = mapper;
         }
 
         [HttpGet("{userId}")]
@@ -32,12 +35,13 @@ namespace StorageApi.Controllers
         }
 
         [HttpPost("{userId}")]
-        public async Task<ActionResult<Cart>> CreateCart(Guid userId, List<AddRemoveCartItemDto> products)
+        public async Task<ActionResult<CartDTO>> CreateCart(Guid userId,[FromBody] List<AddRemoveCartItemDto> products)
         {
             try
             {
-                var newCart = await _cartService.CreateCart(userId, products);
-                return newCart;
+                var cart = await _cartService.CreateCart(userId, products);
+                var cartdto = _mapper.Map<CartDTO>(cart);
+                return cartdto;
             }
             catch (KeyNotFoundException ex)
             {
@@ -46,12 +50,13 @@ namespace StorageApi.Controllers
         }
 
         [HttpPut("{cartId}/add-items")]
-        public async Task<ActionResult<Cart>> AddItemToCart(Guid cartId, List<AddRemoveCartItemDto> products)
+        public async Task<ActionResult<CartDTO>> AddItemToCart(Guid cartId,[FromBody] List<AddRemoveCartItemDto> products)
         {
             try
             {
                 var cart = await _cartService.AddItemToCart(cartId, products);
-                return cart;
+                var cartdto = _mapper.Map<CartDTO>(cart);
+                return cartdto;
             }
             catch (KeyNotFoundException ex)
             {
@@ -60,12 +65,13 @@ namespace StorageApi.Controllers
         }
 
         [HttpPut("{cartId}/remove-items")]
-        public async Task<ActionResult<Cart>> RemoveItemFromCart(Guid cartId, List<AddRemoveCartItemDto> products)
+        public async Task<ActionResult<CartDTO>> RemoveItemFromCart(Guid cartId,[FromBody] List<AddRemoveCartItemDto> products)
         {
             try
             {
                 var cart = await _cartService.RemoveItemFromCart(cartId, products);
-                return cart;
+                var cartdto = _mapper.Map<CartDTO>(cart);
+                return cartdto;
             }
             catch (KeyNotFoundException ex)
             {

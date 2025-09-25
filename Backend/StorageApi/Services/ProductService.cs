@@ -2,30 +2,32 @@
 
 using Microsoft.EntityFrameworkCore;
 using StorageApi.Data;
-using StorageApi.Interfaces;
-using StorageApi.Models;
+using StorageApi.Core.Interfaces;
+using StorageApi.Core.Models;
 
 namespace StorageApi.Services
 {
     public class ProductService : IProductService
     {
-        private readonly AppDbContext _context;
+        private readonly IRepository<Product> _productRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ProductService(AppDbContext context)
+        public ProductService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
+            _productRepository = _unitOfWork.GetRepository<Product>();
         }
 
         public async Task<List<Product>> GetProducts()
         {
-            var products = await _context.Products.ToListAsync();
+            var products = await _productRepository.GetAll().ToListAsync();
 
             return products;
         }
 
         public async Task<Product> GetProductById(Guid id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _productRepository.GetByIdAsync(id);
 
             if (product == null)
                 throw new KeyNotFoundException($"Product with id {id} wasn't found");
@@ -35,8 +37,8 @@ namespace StorageApi.Services
 
         public async Task<Product> CreateProduct(Product product)
         {
-            await _context.Products.AddAsync(product);
-            await _context.SaveChangesAsync();
+            _productRepository.Add(product);
+            await _unitOfWork.SaveChangesAsync();
 
             return product;
         }
@@ -50,7 +52,9 @@ namespace StorageApi.Services
             productToUpdate.Quantity = product.Quantity;
             productToUpdate.Price = product.Price;
 
-            await _context.SaveChangesAsync();
+            _productRepository.Update(productToUpdate);
+
+            await _unitOfWork.SaveChangesAsync();
 
             return productToUpdate;
         }
@@ -59,8 +63,8 @@ namespace StorageApi.Services
         {
             var productToDelete = await GetProductById(id);
 
-            _context.Products.Remove(productToDelete);
-            await _context.SaveChangesAsync();
+            _productRepository.Remove(productToDelete);
+            await _unitOfWork.SaveChangesAsync();
             return true;
         }
     }

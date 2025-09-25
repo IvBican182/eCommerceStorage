@@ -1,9 +1,9 @@
 
 
-using System.ComponentModel.DataAnnotations;
+
 using Microsoft.AspNetCore.Identity;
 
-namespace StorageApi.Models
+namespace StorageApi.Core.Models
 {
     public class Role : IdentityRole<Guid>
     {

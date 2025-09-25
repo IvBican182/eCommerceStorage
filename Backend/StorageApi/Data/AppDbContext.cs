@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using StorageApi.Models;
+using StorageApi.Core.Models;
 
 namespace StorageApi.Data
 {

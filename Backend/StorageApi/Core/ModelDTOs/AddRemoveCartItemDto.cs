@@ -1,6 +1,6 @@
 
 
-namespace StorageApi.ModelsDTO
+namespace StorageApi.Core.ModelsDTO
 {
     public class AddRemoveCartItemDto
     {

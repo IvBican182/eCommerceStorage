@@ -2,23 +2,27 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using StorageApi.Data;
-using StorageApi.Interfaces;
-using StorageApi.Models;
-using StorageApi.ModelsDTO;
+using StorageApi.Core.Interfaces;
+using StorageApi.Core.Models;
+using StorageApi.Core.ModelsDTO;
 
 namespace StorageApi.Services
 {
     public class CartService : ICartService
     {
-        private readonly AppDbContext _context;
-        public CartService(AppDbContext context)
+        private readonly IRepository<Cart> _cartRepository;
+        private readonly IRepository<User> _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
+        public CartService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
+            _cartRepository = _unitOfWork.GetRepository<Cart>();
+            _userRepository = _unitOfWork.GetRepository<User>();
         }
 
         public async Task<Cart> CreateCart(Guid userId, List<AddRemoveCartItemDto> products)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _userRepository.GetByIdAsync(userId);
 
             var cart = new Cart();
 
@@ -43,16 +47,20 @@ namespace StorageApi.Services
                 cart.CartItems.Add(cartItem);
             }
 
-            await _context.Carts.AddAsync(cart);
+            _cartRepository.Add(cart);
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return cart;
         }
 
         public async Task<Cart> GetUserCart(Guid userId)
         {
-            var userCart = await _context.Carts.Include(ci => ci.CartItems).FirstOrDefaultAsync(c => c.UserId == userId);
+            var userCart = await _cartRepository
+                                        .GetAll()
+                                        .Where(c => c.UserId == userId)
+                                        .Include(ci => ci.CartItems)
+                                        .FirstOrDefaultAsync();
 
             if (userCart == null)
             {
@@ -63,7 +71,7 @@ namespace StorageApi.Services
 
         public async Task<Cart> AddItemToCart(Guid id, List<AddRemoveCartItemDto> products)
         {
-            var cart = await _context.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == id);
+            var cart = await _cartRepository.GetByIdAsync(id);
 
             if (cart == null)
             {
@@ -92,7 +100,7 @@ namespace StorageApi.Services
                 cart.CartItems.Add(cartItem);
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             return cart;
 
 
@@ -101,7 +109,7 @@ namespace StorageApi.Services
 
         public async Task<Cart> RemoveItemFromCart(Guid id, List<AddRemoveCartItemDto> products)
         {
-            var cart = await _context.Carts.Include(c => c.CartItems).FirstOrDefaultAsync(c => c.Id == id);
+            var cart = await _cartRepository.GetByIdAsync(id);
 
             if (cart == null)
             {
@@ -123,28 +131,29 @@ namespace StorageApi.Services
 
                 if (existingCartItem.Quantity <= 0)
                 {
-                    _context.CartItems.Remove(existingCartItem);
+                    cart.CartItems.Remove(existingCartItem);
                 }
 
 
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             return cart;
         }
 
         public async Task<bool> DeleteCart(Guid cartId, Guid userId)
         {
-            var userCart = await _context.Carts
-                                    .Include(ci => ci.CartItems)
-                                    .FirstOrDefaultAsync(c => c.UserId == userId && c.Id == cartId);
+            var userCart = await _cartRepository.GetAll()
+                                                .Where(c => c.Id == cartId)
+                                                .Include(ci => ci.CartItems)
+                                                .FirstOrDefaultAsync();
 
             if (userCart == null)
             {
                 throw new KeyNotFoundException("User cart not found");
             }
-            _context.Carts.Remove(userCart);
-            await _context.SaveChangesAsync();
+            _cartRepository.Remove(userCart);
+            await _unitOfWork.SaveChangesAsync();
             return true;
         }
     }
