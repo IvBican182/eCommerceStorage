@@ -14,6 +14,7 @@ namespace StorageApi.Data
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<CartStatus> CartStatuses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -44,6 +45,8 @@ namespace StorageApi.Data
                 .HasOne(o => o.User)
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId);
+
+           
         }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

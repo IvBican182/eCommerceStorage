@@ -6,11 +6,12 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        
+
         CreateMap<Cart, CartDTO>();
         CreateMap<CartItem, CartItemDto>();
         CreateMap<Order, OrderDTO>();
 
         CreateMap<AddRemoveCartItemDto, CartItem>();
+        CreateMap<Product, ProductDto>();
     }
 }

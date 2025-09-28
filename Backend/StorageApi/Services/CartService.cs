@@ -24,6 +24,8 @@ namespace StorageApi.Services
         {
             var user = await _userRepository.GetByIdAsync(userId);
 
+            //var activeCartExists = write a logic for existing cart, needs a new isActive property on model
+
             var cart = new Cart();
 
             if (user == null)
@@ -35,13 +37,17 @@ namespace StorageApi.Services
 
             foreach (var item in products)
             {
+                var existingCartItem = cart.CartItems.Where(ci => ci.Id == item.ProductId).SingleOrDefault();
+                if (existingCartItem != null)
+                {
+                    existingCartItem.Quantity += item.quantity;
+                }
+
                 var cartItem = new CartItem
                 {
                     ProductId = item.ProductId,
                     CartId = cart.Id,
                     Quantity = item.quantity
-
-
                 };
 
                 cart.CartItems.Add(cartItem);
@@ -141,7 +147,7 @@ namespace StorageApi.Services
             return cart;
         }
 
-        public async Task<bool> DeleteCart(Guid cartId, Guid userId)
+        public async Task<DeleteCartResponseDto> DeleteCart(Guid cartId, Guid userId)
         {
             var userCart = await _cartRepository.GetAll()
                                                 .Where(c => c.Id == cartId)
@@ -150,11 +156,11 @@ namespace StorageApi.Services
 
             if (userCart == null)
             {
-                throw new KeyNotFoundException("User cart not found");
+                return new DeleteCartResponseDto { Success = false, Error = "user cart was not found" };
             }
             _cartRepository.Remove(userCart);
             await _unitOfWork.SaveChangesAsync();
-            return true;
+            return new DeleteCartResponseDto { Success = true };
         }
     }
 }

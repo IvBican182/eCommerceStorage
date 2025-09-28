@@ -6,6 +6,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using StorageApi.Core.Models;
+using StorageApi.Core.ModelsDTO;
 
 namespace StorageApi.Services
 {
@@ -19,24 +20,26 @@ namespace StorageApi.Services
             _userManager = userManager;
         }
 
-        public async Task<string> Login(string email, string password)
+        public async Task<AuthResponseDto> Login(string email, string password)
         {
             var user = await _userManager.FindByEmailAsync(email);
 
             if (user == null)
             {
-                return null;
+                return new AuthResponseDto { Success = false, Error = "invalid credentials" };
             }
 
             var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, password);
 
             if (isPasswordCorrect != true)
             {
-                return null;
+                return new AuthResponseDto { Success = false, Error = "invalid credentials" };
             }
 
             var roles = await _userManager.GetRolesAsync(user);
-            return GenerateUserToken(user, roles);
+            var token = GenerateUserToken(user, roles);
+
+            return new AuthResponseDto { Success = true, Error = "", Token = token };
         }
 
         public string GenerateUserToken(User user, IList<string> roles)

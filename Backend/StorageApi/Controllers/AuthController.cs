@@ -6,7 +6,7 @@ using StorageApi.Services;
 namespace StorageApi.Controllers
 {
     [ApiController]
-    [Route("api[controller]")]
+    [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
@@ -19,15 +19,16 @@ namespace StorageApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            try
+
+            var authResponse = await _authService.Login(loginDto.Email, loginDto.Password);
+
+            if (authResponse.Success != true)
             {
-                var token = await _authService.Login(loginDto.Email, loginDto.Password);
-                return Ok(token);
+                return Unauthorized(new { error = authResponse.Error });
             }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+
+            return Ok(new { token = authResponse.Token });
+            
         }
 
     }

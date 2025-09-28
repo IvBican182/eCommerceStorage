@@ -13,6 +13,6 @@ namespace StorageApi.Core.Interfaces
         Task<Cart> GetUserCart(Guid userId);
         Task<Cart> AddItemToCart(Guid cartId, List<AddRemoveCartItemDto> products);
         Task<Cart> RemoveItemFromCart(Guid cartId, List<AddRemoveCartItemDto> products);
-        Task<bool> DeleteCart(Guid cartId, Guid userId);
+        Task<DeleteCartResponseDto> DeleteCart(Guid cartId, Guid userId);
     }
 }

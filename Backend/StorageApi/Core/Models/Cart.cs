@@ -13,6 +13,11 @@ namespace StorageApi.Core.Models
         
         [ForeignKey(nameof(UserId))]
         public User User { get; set; }
+
+        public Guid CartStatusId { get; set; }
+
+        [ForeignKey(nameof(CartStatusId))]
+        public CartStatus CartStatus { get; set; }
         public ICollection<CartItem> CartItems { get; set; } = new HashSet<CartItem>();
 
         [NotMapped]

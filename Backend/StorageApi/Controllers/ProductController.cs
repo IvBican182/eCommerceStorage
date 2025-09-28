@@ -1,9 +1,11 @@
 
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using StorageApi.Core.Interfaces;
 using StorageApi.Core.Models;
+using StorageApi.Core.ModelsDTO;
 
 namespace StorageApi.Controllers
 {
@@ -13,71 +15,80 @@ namespace StorageApi.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly IMapper _mapper;
 
-        public ProductController(IProductService productService)
+        public ProductController(IProductService productService, IMapper mapper)
         {
             _productService = productService;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Product>>> GetProducts()
+        public async Task<ActionResult<List<ProductDto>>> GetProducts()
         {
             var products = await _productService.GetProducts();
+            var productsDto = _mapper.Map<List<ProductDto>>(products);
 
-            return products;
+            return Ok(productsDto);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProductById(Guid id)
+        public async Task<ActionResult<ProductDto>> GetProductById(Guid id)
         {
-            try
-            {
-                var product = await _productService.GetProductById(id);
-                return product;
+            var product = await _productService.GetProductById(id);
+            var productDto = _mapper.Map<ProductDto>(product);
+
+            if (productDto == null)
+            { 
+                return NotFound( new { error = "product not found" });
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+
+            return Ok(productDto);
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Product>> CreateProduct(Product product)
+        public async Task<ActionResult<ProductDto>> CreateProduct(Product product)
         {
-            await _productService.CreateProduct(product);
-            return product;
 
+            var cretedProduct = await _productService.CreateProduct(product);
+            var createdProductDto = _mapper.Map<ProductDto>(cretedProduct);
+
+            if (createdProductDto == null)
+            {
+                return BadRequest(new { error = "invalid inputs" });
+            }
+
+            return Ok(createdProductDto);
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<Product>> UpdateProduct(Guid id, Product product)
+        public async Task<ActionResult<ProductDto>> UpdateProduct(Guid id, Product product)
         {
-            try
+            var updatedProduct = await _productService.UpdateProduct(id, product);
+            var updatedProductDto = _mapper.Map<ProductDto>(updatedProduct);
+
+            if (updatedProductDto == null)
             {
-                var updatedProduct = await _productService.UpdateProduct(id, product);
-                return Ok(updatedProduct);
+                return NotFound( new { error = "product wasn't updated" });
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+
+            return Ok(updatedProductDto);  
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(Guid id)
         {
-            try
+            var deleteProductResponse = await _productService.DeleteProduct(id);
+
+            if (!deleteProductResponse.Success)
             {
-                await _productService.DeleteProduct(id);
-                return NoContent();
+                return NotFound(new { error = deleteProductResponse.Error });
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+
+            return NoContent();     
         }
     }
 }

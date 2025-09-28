@@ -20,33 +20,29 @@ namespace StorageApi.Controllers
         }
 
         [HttpGet("{userId}")]
-        public async Task<ActionResult<Cart>> GetUserCart(Guid userId)
+        public async Task<ActionResult<CartDTO>> GetUserCart(Guid userId)
         {
-            try
-            {
-                var userCart = await _cartService.GetUserCart(userId);
-                return userCart;
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+            var userCart = await _cartService.GetUserCart(userId);
+            var userCartDto = _mapper.Map<CartDTO>(userCart);
+
+            return Ok(userCartDto);
 
         }
 
         [HttpPost("{userId}")]
         public async Task<ActionResult<CartDTO>> CreateCart(Guid userId,[FromBody] List<AddRemoveCartItemDto> products)
         {
-            try
+           
+            var cart = await _cartService.CreateCart(userId, products);
+            var cartdto = _mapper.Map<CartDTO>(cart);
+
+            if (cartdto == null)
             {
-                var cart = await _cartService.CreateCart(userId, products);
-                var cartdto = _mapper.Map<CartDTO>(cart);
-                return cartdto;
+                return BadRequest(new { error = "error occured while creating a cart, invalid inputs" });
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+
+            return Ok(cartdto);
+            
         }
 
         [HttpPut("{cartId}/add-items")]
@@ -60,7 +56,7 @@ namespace StorageApi.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { error = ex.Message });
             }
         }
 
@@ -75,22 +71,21 @@ namespace StorageApi.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { error = ex.Message });
             }
         }
 
         [HttpDelete("{cartId}/{userId}")]
-        public async Task<IActionResult> DeleteCart(Guid cartId, Guid userId)
+        public async Task<ActionResult<DeleteCartResponseDto>> DeleteCart(Guid cartId, Guid userId)
         {
-            try
-            {
-                var cart = await _cartService.DeleteCart(cartId, userId);
-                return Ok(cart);
+            var deleteCartResponse = await _cartService.DeleteCart(cartId, userId);
+
+            if (!deleteCartResponse.Success)
+            { 
+                return NotFound(new { error = deleteCartResponse.Error });
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+
+            return NoContent();
         }
     }
 }

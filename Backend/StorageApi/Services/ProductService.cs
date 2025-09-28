@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using StorageApi.Data;
 using StorageApi.Core.Interfaces;
 using StorageApi.Core.Models;
+using StorageApi.Core.ModelsDTO;
 
 namespace StorageApi.Services
 {
@@ -59,13 +60,19 @@ namespace StorageApi.Services
             return productToUpdate;
         }
 
-        public async Task<bool> DeleteProduct(Guid id)
+        public async Task<DeleteProductResponseDto> DeleteProduct(Guid id)
         {
             var productToDelete = await GetProductById(id);
 
+            if (productToDelete == null)
+            {
+                return new DeleteProductResponseDto { Success = false, Error = "product not found" };
+            }
+
             _productRepository.Remove(productToDelete);
             await _unitOfWork.SaveChangesAsync();
-            return true;
+
+            return new DeleteProductResponseDto { Success = true, DeletedProductId = productToDelete.Id };
         }
     }
 }

@@ -1,6 +1,7 @@
 
 
 using StorageApi.Core.Models;
+using StorageApi.Core.ModelsDTO;
 
 namespace StorageApi.Core.Interfaces
 {
@@ -10,6 +11,6 @@ namespace StorageApi.Core.Interfaces
         Task<Product> GetProductById(Guid id);
         Task<Product> CreateProduct(Product product);
         Task<Product> UpdateProduct(Guid id, Product product);
-        Task<bool> DeleteProduct(Guid id);
+        Task<DeleteProductResponseDto> DeleteProduct(Guid id);
     }
 }
