@@ -11,20 +11,24 @@ namespace StorageApi.Services
     public class OrderService : IOrderService
     {
         private readonly IRepository<Order> _orderRepository;
+        private readonly IRepository<Cart> _cartRepository;
         private readonly IUnitOfWork _unitOfWork;
         public OrderService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
             _orderRepository = _unitOfWork.GetRepository<Order>();
+            _cartRepository =  _unitOfWork.GetRepository<Cart>();
         }
 
+        //POTREBNO DORADITI radi dodatka statusa narudžbe kako bi znali o kojoj točno narudžbi korisnika se radi
+        //prilikom akcija na narudžbi
         public async Task<Order> CreateOrder(Cart cart, Guid userId)
         {
-            var userCart = await _orderRepository.GetByIdAsync(cart.Id);
+            var userCart = await _cartRepository.GetByIdAsync(cart.Id);
 
-            if (userCart == null)
+            if (userCart.CartStatus.Name != "Active")
             {
-                throw new KeyNotFoundException("order not found");
+                throw new KeyNotFoundException("order not found or was already completed/cancelled");
             }
 
             var order = new Order
@@ -74,7 +78,6 @@ namespace StorageApi.Services
 
             return userOrder;
             
-
         }
 
         public async Task<Order> RemoveOrderItem(Guid orderId, Guid userId, List<OrderItemDto> products)

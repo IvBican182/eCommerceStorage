@@ -20,6 +20,8 @@ namespace StorageApi.Core.Models
         public CartStatus CartStatus { get; set; }
         public ICollection<CartItem> CartItems { get; set; } = new HashSet<CartItem>();
 
+        public Order Order { get; set; }
+
         [NotMapped]
         public decimal CartTotal
         {

@@ -5,6 +5,8 @@ using StorageApi.Data;
 using StorageApi.Core.Interfaces;
 using StorageApi.Core.Models;
 using StorageApi.Core.ModelsDTO;
+using StorageApi.Core.Constants;
+using System.Threading.Tasks;
 
 namespace StorageApi.Services
 {
@@ -24,49 +26,74 @@ namespace StorageApi.Services
         {
             var user = await _userRepository.GetByIdAsync(userId);
 
-            //var activeCartExists = write a logic for existing cart, needs a new isActive property on model
-
-            var cart = new Cart();
-
             if (user == null)
             {
                 throw new KeyNotFoundException("user not found");
             }
 
-            cart.UserId = userId;
+            var activeUserCart = await _cartRepository
+                                            .GetAll()
+                                            .Include(a => a.CartItems)
+                                            .FirstOrDefaultAsync(c => c.UserId == userId && c.CartStatus.Name == "Active");
 
-            foreach (var item in products)
+            if (activeUserCart != null)
             {
-                var existingCartItem = cart.CartItems.Where(ci => ci.Id == item.ProductId).SingleOrDefault();
-                if (existingCartItem != null)
+                foreach (var item in products)
                 {
-                    existingCartItem.Quantity += item.quantity;
+                    var existingCartItem = activeUserCart.CartItems.Where(ci => ci.ProductId == item.ProductId).SingleOrDefault();
+                    if (existingCartItem != null)
+                    {
+                        existingCartItem.Quantity += item.quantity;
+                    }
+                    else
+                    {
+                        var cartItem = new CartItem
+                        {
+                            ProductId = item.ProductId,
+                            CartId = activeUserCart.Id,
+                            Quantity = item.quantity,
+                        };
+
+                        activeUserCart.CartItems.Add(cartItem);
+                    }
+
+                }
+                await _unitOfWork.SaveChangesAsync();
+                return activeUserCart;
+
+            }
+            else
+            {
+                var newCart = new Cart();
+
+                newCart.UserId = userId;
+                newCart.CartStatusId = CartStatusConstants.Active;
+
+                foreach (var item in products)
+                {
+                    var cartItem = new CartItem
+                    {
+                        ProductId = item.ProductId,
+                        CartId = newCart.Id,
+                        Quantity = item.quantity
+                    };
+
+                    newCart.CartItems.Add(cartItem);
                 }
 
-                var cartItem = new CartItem
-                {
-                    ProductId = item.ProductId,
-                    CartId = cart.Id,
-                    Quantity = item.quantity
-                };
+                _cartRepository.Add(newCart);
+                await _unitOfWork.SaveChangesAsync();
+                return newCart;
 
-                cart.CartItems.Add(cartItem);
             }
-
-            _cartRepository.Add(cart);
-
-            await _unitOfWork.SaveChangesAsync();
-
-            return cart;
         }
 
         public async Task<Cart> GetUserCart(Guid userId)
         {
             var userCart = await _cartRepository
                                         .GetAll()
-                                        .Where(c => c.UserId == userId)
                                         .Include(ci => ci.CartItems)
-                                        .FirstOrDefaultAsync();
+                                        .FirstOrDefaultAsync(c => c.UserId == userId && c.CartStatus.Name == "Active");
 
             if (userCart == null)
             {
@@ -75,9 +102,9 @@ namespace StorageApi.Services
             return userCart;
         }
 
-        public async Task<Cart> AddItemToCart(Guid id, List<AddRemoveCartItemDto> products)
+        public async Task<Cart> AddItemToCart(Guid userId, List<AddRemoveCartItemDto> products)
         {
-            var cart = await _cartRepository.GetByIdAsync(id);
+            var cart = await GetUserCart(userId);
 
             if (cart == null)
             {
@@ -93,29 +120,26 @@ namespace StorageApi.Services
                 {
                     existingCartItem.Quantity += item.quantity;
                 }
-
-                var cartItem = new CartItem
+                else
                 {
-                    ProductId = item.ProductId,
-                    CartId = cart.Id,
-                    Quantity = item.quantity
+                    var cartItem = new CartItem
+                    {
+                        ProductId = item.ProductId,
+                        CartId = cart.Id,
+                        Quantity = item.quantity
+                    };
 
-
-                };
-
-                cart.CartItems.Add(cartItem);
+                    cart.CartItems.Add(cartItem);
+                }
             }
 
             await _unitOfWork.SaveChangesAsync();
             return cart;
-
-
-
         }
 
-        public async Task<Cart> RemoveItemFromCart(Guid id, List<AddRemoveCartItemDto> products)
+        public async Task<Cart> RemoveItemFromCart(Guid userId, List<AddRemoveCartItemDto> products)
         {
-            var cart = await _cartRepository.GetByIdAsync(id);
+            var cart = await GetUserCart(userId);
 
             if (cart == null)
             {
@@ -139,7 +163,6 @@ namespace StorageApi.Services
                 {
                     cart.CartItems.Remove(existingCartItem);
                 }
-
 
             }
 
