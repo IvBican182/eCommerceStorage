@@ -10,11 +10,11 @@ namespace StorageApi.Core.Models
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid UserId { get; set; }
         public User User { get; set; }
-        public Guid? CartId { get; set; } 
+        public Guid CartId { get; set; } 
               
         [ForeignKey(nameof(CartId))]
         public Cart Cart { get; set; } 
-        public Guid? OrderStatusId { get; set; }
+        public Guid OrderStatusId { get; set; }
 
         [ForeignKey(nameof(OrderStatusId))]
         public OrderStatus OrderStatus { get; set; }

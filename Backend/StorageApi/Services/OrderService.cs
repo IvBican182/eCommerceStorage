@@ -5,6 +5,7 @@ using StorageApi.Data;
 using StorageApi.Core.Interfaces;
 using StorageApi.Core.Models;
 using StorageApi.Core.ModelsDTO;
+using StorageApi.Core.Constants;
 
 namespace StorageApi.Services
 {
@@ -20,21 +21,31 @@ namespace StorageApi.Services
             _cartRepository =  _unitOfWork.GetRepository<Cart>();
         }
 
-        //POTREBNO DORADITI radi dodatka statusa narudžbe kako bi znali o kojoj točno narudžbi korisnika se radi
-        //prilikom akcija na narudžbi
+        //POTREBNO DODATI - ConfirmOrder gdje će onda CartStatus postati completed, order također confirmed
         public async Task<Order> CreateOrder(Cart cart, Guid userId)
         {
-            var userCart = await _cartRepository.GetByIdAsync(cart.Id);
+            var userCart = await _cartRepository
+                                        .Find(c => c.UserId == userId)
+                                        .Include(c => c.Order)
+                                        .Include(q => q.CartItems)
+                                        .FirstOrDefaultAsync();
 
-            if (userCart.CartStatus.Name != "Active")
+            if (userCart.CartStatusId != CartStatusConstants.Active)
             {
-                throw new KeyNotFoundException("order not found or was already completed/cancelled");
+                throw new InvalidOperationException("Cart is not active.");
+            }
+
+            if (userCart.Order != null)
+            {
+                throw new KeyNotFoundException("cart already has a connected order");
             }
 
             var order = new Order
             {
                 UserId = cart.UserId,
-                TotalPrice = cart.CartTotal
+                TotalPrice = cart.CartTotal,
+                CartId = cart.Id,
+                OrderStatusId = OrderStatusConstants.Active
             };
 
             foreach (var cartItem in cart.CartItems)
@@ -42,7 +53,7 @@ namespace StorageApi.Services
 
                 var orderItem = new OrderItem
                 {
-                    ProductId = cartItem.Id,
+                    ProductId = cartItem.ProductId,
                     ItemQuantity = cartItem.Quantity,
                     Price = cartItem.CartItemPrice
                 };
@@ -59,18 +70,25 @@ namespace StorageApi.Services
         }
         public async Task<Order> AddOrderItem(Guid orderId, Guid userId, List<OrderItemDto> products)
         {
-            var userOrder = await _orderRepository.GetAll().Where(o => o.Id == orderId && o.UserId == userId).FirstOrDefaultAsync();
+            var userOrder = await _orderRepository
+                                            .Find(o => o.Id == orderId && o.UserId == userId)
+                                            .Include(o => o.OrderItems)
+                                            .Include(os => os.OrderStatus)
+                                            .FirstOrDefaultAsync();
 
-            if (userOrder == null)
+            if (userOrder == null || userOrder.OrderStatusId != OrderStatusConstants.Active)
             {
-                throw new KeyNotFoundException("cart not found");
+                throw new KeyNotFoundException("order was not found");
             }
 
             foreach (var product in products)
             {
                 var orderItem = userOrder.OrderItems.FirstOrDefault(oi => oi.ProductId == product.ProductId);
 
-                orderItem.ItemQuantity += product.quantity;
+                if (orderItem != null)
+                {
+                    orderItem.ItemQuantity += product.quantity;
+                }
 
             }
 
@@ -82,23 +100,31 @@ namespace StorageApi.Services
 
         public async Task<Order> RemoveOrderItem(Guid orderId, Guid userId, List<OrderItemDto> products)
         {
-            var userOrder = await _orderRepository.GetAll().Where(o => o.Id == orderId && o.UserId == userId).FirstOrDefaultAsync();
+            var userOrder = await _orderRepository
+                                            .Find(o => o.Id == orderId && o.UserId == userId)
+                                            .Include(o => o.OrderItems)
+                                            .Include(os => os.OrderStatus)
+                                            .FirstOrDefaultAsync();
 
-            if (userOrder == null)
+            if (userOrder == null || userOrder.OrderStatusId != OrderStatusConstants.Active)
             {
-                throw new KeyNotFoundException("order not found");
+                throw new KeyNotFoundException("order was not found");
             }
 
             foreach (var product in products)
             {
                 var orderItem = userOrder.OrderItems.FirstOrDefault(oi => oi.ProductId == product.ProductId);
 
-                orderItem.ItemQuantity -= product.quantity;
-
-                if (orderItem.ItemQuantity <= 0)
+                if (orderItem != null)
                 {
-                    userOrder.OrderItems.Remove(orderItem);
+                    orderItem.ItemQuantity -= product.quantity;
+
+                    if (orderItem.ItemQuantity <= 0)
+                    {
+                        userOrder.OrderItems.Remove(orderItem);
+                    }
                 }
+
             }
 
             await _unitOfWork.SaveChangesAsync();
