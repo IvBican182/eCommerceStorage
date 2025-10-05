@@ -17,7 +17,7 @@ export class LoginComponent {
   onSubmit(): void {
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => this.router.navigate(['/']),
-      error: () => this.errorMessage = 'Login failed. Check your credentials.'
+      error: () => this.errorMessage = 'Login failed. Check your credentials.!!'
     });
   }
 
