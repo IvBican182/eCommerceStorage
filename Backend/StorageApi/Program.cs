@@ -29,7 +29,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 // Add services
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();      // Needed for Swagger
+builder.Services.AddEndpointsApiExplorer();      
 builder.Services.AddSwaggerGen(); 
 builder.Services.AddControllersWithViews();
 

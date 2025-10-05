@@ -13,7 +13,7 @@ interface LoginResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = environment.authApiUrl;
 
   constructor(private http: HttpClient, private router: Router) {}
 

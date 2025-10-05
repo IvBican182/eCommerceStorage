@@ -21,11 +21,11 @@ namespace StorageApi.Controllers
         }
 
         [HttpPost("{userId}")]
-        public async Task<ActionResult<OrderDTO>> CreateOrder(Cart cart, Guid userId)
+        public async Task<ActionResult<OrderDTO>> CreateOrder(Guid cartId, Guid userId)
         {
             try
             {
-                var order = await _orderservice.CreateOrder(cart, userId);
+                var order = await _orderservice.CreateOrder(cartId, userId);
                 var orderDto = _mapper.Map<OrderDTO>(order);
                 return orderDto;
             }
@@ -46,7 +46,7 @@ namespace StorageApi.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { error = ex.Message });
             }
         }
 
@@ -61,7 +61,7 @@ namespace StorageApi.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { error = ex.Message });
             }
         }
 
@@ -75,7 +75,21 @@ namespace StorageApi.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CheckoutOrder(Guid userId, Guid orderId)
+        {
+            try
+            {
+                await _orderservice.CheckoutOrder(userId, orderId);
+                return Ok(new { message = "Order succesful" });
+            }
+            catch (InvalidOperationException er)
+            {
+                return BadRequest(new { error = er.Message });
             }
         }
     }    

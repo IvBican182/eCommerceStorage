@@ -6,6 +6,8 @@ using StorageApi.Core.Interfaces;
 using StorageApi.Core.Models;
 using StorageApi.Core.ModelsDTO;
 using StorageApi.Core.Constants;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace StorageApi.Services
 {
@@ -18,22 +20,27 @@ namespace StorageApi.Services
         {
             _unitOfWork = unitOfWork;
             _orderRepository = _unitOfWork.GetRepository<Order>();
-            _cartRepository =  _unitOfWork.GetRepository<Cart>();
+            _cartRepository = _unitOfWork.GetRepository<Cart>();
         }
 
         //POTREBNO DODATI - ConfirmOrder gdje će onda CartStatus postati completed, order također confirmed
-        public async Task<Order> CreateOrder(Cart cart, Guid userId)
+        public async Task<Order> CreateOrder(Guid cartId, Guid userId)
         {
             var userCart = await _cartRepository
-                                        .Find(c => c.UserId == userId)
+                                        .GetAll()
+                                        .Where(c => c.UserId == userId && c.Id == cartId)
                                         .Include(c => c.Order)
                                         .Include(q => q.CartItems)
                                         .FirstOrDefaultAsync();
+            if (userCart == null)
+            {
+                throw new KeyNotFoundException("user cart not found");
+            }
 
             if (userCart.CartStatusId != CartStatusConstants.Active)
-            {
-                throw new InvalidOperationException("Cart is not active.");
-            }
+                {
+                    throw new InvalidOperationException("Cart is not active.");
+                }
 
             if (userCart.Order != null)
             {
@@ -42,13 +49,13 @@ namespace StorageApi.Services
 
             var order = new Order
             {
-                UserId = cart.UserId,
-                TotalPrice = cart.CartTotal,
-                CartId = cart.Id,
+                UserId = userCart.UserId,
+                TotalPrice = userCart.CartTotal,
+                CartId = userCart.Id,
                 OrderStatusId = OrderStatusConstants.Active
             };
 
-            foreach (var cartItem in cart.CartItems)
+            foreach (var cartItem in userCart.CartItems)
             {
 
                 var orderItem = new OrderItem
@@ -95,7 +102,7 @@ namespace StorageApi.Services
             await _unitOfWork.SaveChangesAsync();
 
             return userOrder;
-            
+
         }
 
         public async Task<Order> RemoveOrderItem(Guid orderId, Guid userId, List<OrderItemDto> products)
@@ -147,6 +154,36 @@ namespace StorageApi.Services
 
             await _unitOfWork.SaveChangesAsync();
             return true;
+        }
+
+        public async Task CheckoutOrder(Guid userId, Guid orderId)
+        {
+            var order = await _orderRepository
+                                    .GetAll()
+                                    .Where(q => q.Id == orderId && q.UserId == userId)
+                                    .Include(oi => oi.OrderItems)
+                                    .ThenInclude(o => o.Product)
+                                    .FirstOrDefaultAsync();
+
+            if (order == null)
+            {
+                throw new KeyNotFoundException("permission to order denied");
+            }
+
+            order.OrderStatusId = OrderStatusConstants.Confirmed;
+
+            foreach (var item in order.OrderItems)
+            {
+                if (item.Product.Quantity < item.ItemQuantity)
+                {
+                    throw new Exception("Unfortunately we don't have enough products in storage");
+                }
+                else
+                {
+                    item.Product.Quantity -= item.ItemQuantity;
+                }
+            }
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

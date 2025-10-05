@@ -102,7 +102,7 @@ namespace StorageApi.Services
             return userCart;
         }
 
-        public async Task<Cart> AddItemToCart(Guid userId, List<AddRemoveCartItemDto> products)
+        public async Task<Cart> AddItemToCart(Guid userId, AddRemoveCartItemDto product)
         {
             var cart = await GetUserCart(userId);
 
@@ -111,29 +111,25 @@ namespace StorageApi.Services
                 throw new KeyNotFoundException("cart not found");
             }
 
-            foreach (var item in products)
+            var productItem = cart.CartItems.Where(q => q.ProductId == product.ProductId).SingleOrDefault();
+
+            if (productItem == null)
             {
-                var existingCartItem = cart.CartItems.FirstOrDefault(
-                    ci => ci.ProductId == item.ProductId && ci.CartId == cart.Id);
-
-                if (existingCartItem != null)
+                var newCartItem = new CartItem
                 {
-                    existingCartItem.Quantity += item.quantity;
-                }
-                else
-                {
-                    var cartItem = new CartItem
-                    {
-                        ProductId = item.ProductId,
-                        CartId = cart.Id,
-                        Quantity = item.quantity
-                    };
-
-                    cart.CartItems.Add(cartItem);
-                }
+                    CartId = cart.Id,
+                    ProductId = product.ProductId,
+                    Quantity = product.quantity
+                };
+                cart.CartItems.Add(newCartItem);
+                await _unitOfWork.SaveChangesAsync();
+            }
+            else
+            {
+                productItem.Quantity += product.quantity;
+                await _unitOfWork.SaveChangesAsync();
             }
 
-            await _unitOfWork.SaveChangesAsync();
             return cart;
         }
 

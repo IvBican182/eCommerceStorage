@@ -46,11 +46,11 @@ namespace StorageApi.Controllers
         }
 
         [HttpPut("{cartId}/add-items")]
-        public async Task<ActionResult<CartDTO>> AddItemToCart(Guid cartId,[FromBody] List<AddRemoveCartItemDto> products)
+        public async Task<ActionResult<CartDTO>> AddItemToCart(Guid cartId,[FromBody] AddRemoveCartItemDto product)
         {
             try
             {
-                var cart = await _cartService.AddItemToCart(cartId, products);
+                var cart = await _cartService.AddItemToCart(cartId, product);
                 var cartdto = _mapper.Map<CartDTO>(cart);
                 return cartdto;
             }
